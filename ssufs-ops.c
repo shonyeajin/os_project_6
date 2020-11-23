@@ -13,6 +13,19 @@ int ssufs_allocFileHandle() {
 
 int ssufs_create(char *filename){
 	/* 1 */
+		//새로만들수 있는 공간이 있는지 확인해야함.(나중에 추가)
+		int ret=ssufs_allocInode();
+		int fd;
+
+		if(ret==-1)
+				return -1;
+		if((fd=open(filename, O_CREAT|O_EXCL,0777))<0){
+				printf("file create failed\n");
+				return -1;
+		}
+		close(fd);
+
+		return ret;
 }
 
 void ssufs_delete(char *filename){
