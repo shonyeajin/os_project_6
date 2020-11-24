@@ -44,6 +44,17 @@ void ssufs_delete(char *filename){
 		if((inum=open_namei(filename))<0){
 				printf("open_namei failed\n");
 		}
+		struct inode_t *inode = (struct inode_t *) malloc(sizeof(struct inode_t));
+		ssufs_readInode(inum, inode);
+		//printf("inum:%d\n",inum);
+
+		for(int i=0;i<MAX_FILE_SIZE;i++){
+				if(inode->direct_blocks[i]==DATA_BLOCK_USED){
+						printf("here\n");
+						ssufs_freeDataBlock(inode->direct_blocks[i]);
+				}
+		}
+		free(inode);
 		ssufs_freeInode(inum);
 		/*
 		//해당 inode 번호에 해당하는 handler array에서 index찾음
@@ -99,6 +110,8 @@ int ssufs_write(int file_handle, char *buf, int nbytes){
 		//해당 handle array에서 inode_number알아냄
 		//alloc data block 해서 할당받음
 		//블록번호(0~30)에 buf내용 씀,BLOCk_SIZE만큼
+		//inode에 direct랑 file size갱신
+		//handler의 offset값도 갱신
 
 
 		if(nbytes>256){
@@ -113,15 +126,25 @@ int ssufs_write(int file_handle, char *buf, int nbytes){
 				return -1;
 		}
 		ssufs_writeDataBlock(blockNum,buf);
-/*
 		//해당 fd의 inode 불러옴..->direct_block값 변경하기 위해
-		int inoNum=file_handle_array[file_handle].inode_number;
-		struct inode_t *inode;
-		ssufs_readInode(inoNum,inode);
-		//inode->direct_blocks;
+		struct inode_t *inode = (struct inode_t *) malloc(sizeof(struct inode_t));
+		ssufs_readInode(file_handle_array[file_handle].inode_number, inode);
+		inode->file_size+=nbytes;
+		//나중에 for문 적용해서 고쳐야함
+		inode->direct_blocks[0]=blockNum;
+		ssufs_writeInode(file_handle_array[file_handle].inode_number,inode);
 
-*/
 
+
+
+
+		free(inode);
+	
+
+		printf("inode num: %d,status:%c,name:%s,file_size:%d,direct_block:%d\n",file_handle_array[file_handle].inode_number,inode->status,inode->name,inode->file_size, inode->direct_blocks[0]);
+
+
+		return 0;
 
 
 
