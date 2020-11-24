@@ -104,9 +104,59 @@ int ssufs_read(int file_handle, char *buf, int nbytes){
 		//인자로 받은 file_handle(=fd)에서 해당 byte만큼을 읽어야함
 		//우선
 }
-
 int ssufs_write(int file_handle, char *buf, int nbytes){
-	/* 5 */
+		//몇개의 블럭을 사용해야하는지 계산
+		int iter=nbytes/64;
+		char total[257];
+		for(int i=0;i<257;i++){
+				total[i]='\0';
+		}
+		for(int i=0;i<strlen(buf);i++){
+				total[i]=buf[i];
+		}
+		//해당 inode불러옴
+		struct inode_t *inode=(struct inode_t *) malloc(sizeof(struct inode_t));
+		ssufs_readInode(file_handle_array[file_handle].inode_number,inode);
+
+		//한블록보다 크면 토큰 나눔
+		for(int i=0;i<iter;i++){
+				int blockNum;
+
+				//사용가능한 블록있는지 확인
+				if((blockNum=ssufs_allocDataBlock())<0){
+						printf("alloc DataBlock failed\n");
+						ssufs_freeDataBlock(blockNum);
+						return -1;
+				}
+
+				//문자열을 segment로 자름
+				char seg[65];
+				for(int j=0;j<65;j++){
+						seg[j]='\0';
+				}
+				for(int j=0;j<64;j++){
+						if(total[64*i+j]=='\0')
+								break;
+						seg[j]=total[64*i+j];
+				}
+
+				ssufs_writeDataBlock(blockNum,seg);
+				inode->direct_blocks[i]=blockNum;
+
+		}
+
+		//성공하면 한번만
+		inode->file_size+=nbytes;
+		ssufs_writeInode(file_handle_array[file_handle].inode_number,inode);
+		free(inode);
+		return 0;
+
+
+
+}
+/*
+int ssufs_write(int file_handle, char *buf, int nbytes){
+	
 		//해당 handle array에서 inode_number알아냄
 		//alloc data block 해서 할당받음
 		//블록번호(0~30)에 buf내용 씀,BLOCk_SIZE만큼
@@ -152,6 +202,7 @@ int ssufs_write(int file_handle, char *buf, int nbytes){
 
 
 }
+*/
 
 int ssufs_lseek(int file_handle, int nseek){
 	int offset = file_handle_array[file_handle].offset;
