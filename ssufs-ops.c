@@ -102,7 +102,9 @@ void ssufs_close(int file_handle){
 int ssufs_read(int file_handle, char *buf, int nbytes){
 	/* 4 */
 		//인자로 받은 file_handle(=fd)에서 해당 byte만큼을 읽어야함
-		int iter=nbytes/64;
+		int iter=nbytes/64+1;
+		if(nbytes%64==0)
+				iter-=1;
 		char total[257];
 		for(int i=0;i<257;i++){
 				total[i]='\0';
@@ -137,7 +139,9 @@ int ssufs_read(int file_handle, char *buf, int nbytes){
 }
 int ssufs_write(int file_handle, char *buf, int nbytes){
 		//몇개의 블럭을 사용해야하는지 계산
-		int iter=nbytes/64;
+		int iter=nbytes/64+1;
+		if(nbytes%64==0)
+				iter-=1;
 		char total[257];
 		for(int i=0;i<257;i++){
 				total[i]='\0';
